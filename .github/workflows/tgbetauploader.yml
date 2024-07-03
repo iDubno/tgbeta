@@ -1,0 +1,49 @@
+name: Download and Notify
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+      short_version:
+        description: 'Short Version'
+        required: true
+      download_url:
+        description: 'Download URL'
+        required: true
+      uploaded_at:
+        description: 'Uploaded At'
+        required: true
+      release_notes:
+        description: 'Release Notes'
+        required: true
+
+jobs:
+  download_and_notify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install aiohttp aiofiles pyrogram nest_asyncio TgCrypto
+
+    - name: Run upload script
+      env:
+        API_ID: ${{ secrets.API_ID }}
+        API_HASH: ${{ secrets.API_HASH }}
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        INPUT_VERSION: ${{ github.event.inputs.version }}
+        INPUT_SHORT_VERSION: ${{ github.event.inputs.short_version }}
+        INPUT_DOWNLOAD_URL: ${{ github.event.inputs.download_url }}
+        INPUT_UPLOADED_AT: ${{ github.event.inputs.uploaded_at }}
+        INPUT_RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+      run: python upload.py
