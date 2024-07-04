@@ -9,7 +9,7 @@ import logging
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHAT_ID = -1001341570295
+CHAT_ID = -1001961065542
 
 APP_CENTER_URL = "https://api.appcenter.ms/v0.1/public/sdk/apps/f9726602-67c9-48d2-b5d0-4761f1c1a8f3/releases/latest"
 THUMBNAIL_URL = "https://graph.org/file/b8895c429c91ac72b542d.png"
