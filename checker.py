@@ -1,6 +1,5 @@
-# This is now the main and only file. The other files are for the GitHub Actions configuration, which we do not use anymore.
-# We run this code on a server, so some values will be empty. 
 import os
+import uuid
 import asyncio
 import aiohttp
 import aiofiles
@@ -15,9 +14,9 @@ import signal
 
 # Configuration and Constants
 API_ID = "Enter Value Here"
-API_HASH = "Enter Value Here"
+API_HASH = "Enter  Value Here"
 BOT_TOKEN = "Enter Value Here"
-CHAT_ID = -1001961065542
+CHAT_ID = -1001341570295
 APP_CENTER_URL = "https://api.appcenter.ms/v0.1/public/sdk/apps/f9726602-67c9-48d2-b5d0-4761f1c1a8f3/releases/latest"
 THUMBNAIL_URL = "https://graph.org/file/b8895c429c91ac72b542d.png"
 THUMBNAIL_PATH = "thumb.jpg"
@@ -77,13 +76,15 @@ async def prepare_thumbnail(session):
         await download_file(session, THUMBNAIL_URL, None, 0, THUMBNAIL_PATH)
 
 async def check_for_updates(first_run=False):
-    app = Client("telegram_beta", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+    unique_session_id = str(uuid.uuid4())
+    app = Client(unique_session_id, api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
     
     previous_version = "00000"
     
     conn = aiohttp.TCPConnector(limit_per_host=10, ssl=sslcontext)
     async with aiohttp.ClientSession(connector=conn) as session:
         await prepare_thumbnail(session)
+        print(f"Using chat ID in check_for_updates: {CHAT_ID}")
 
         while True:
             try:
@@ -142,6 +143,7 @@ async def send_latest_build(app, session):
     if download_url == 'not found':
         await app.send_message(CHAT_ID, "⚠ Warning! New release with no download URL found. Recommend investigation.")
     else:
+        print(f"Using chat ID in send_latest_build: {CHAT_ID}")
         message = await app.send_photo(CHAT_ID, photo=THUMBNAIL_URL, caption=f"**Build {short_version} ({version}) was released.**\n__Preparing to download...__")
         apk_path = "app.apk"
         file_path = await download_file(session, download_url, message, total_size, apk_path)
@@ -153,13 +155,15 @@ async def send_latest_build(app, session):
         os.remove(apk_path)
 
 async def start_bot():
-    app = Client("telegram_beta", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+    unique_session_id = str(uuid.uuid4())
+    app = Client(unique_session_id, api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
     conn = aiohttp.TCPConnector(limit_per_host=10, ssl=sslcontext)
     session = aiohttp.ClientSession(connector=conn)
 
     @app.on_message(filters.command("latest", prefixes="."))
     async def latest_build(client, message):
+        print(f"Using chat ID in latest_build: {CHAT_ID}")
         m = await message.reply_text("`Loading...`")
         try:
             release_info = await fetch_release_info(session)
@@ -195,6 +199,7 @@ async def start_bot():
 
     @app.on_message(filters.command("connectiontest", prefixes="."))
     async def connectiontest_command(client, message):
+        print(f"Using chat ID in connectiontest_command: {CHAT_ID}")
         if message.from_user.id not in AUTHORIZED_USERS:
             await message.reply_text("**You are not authorized to use this command.**")
             return
@@ -220,6 +225,7 @@ async def start_bot():
 
     @app.on_message(filters.command("speedtest", prefixes="."))
     async def speedtest_command(client, message):
+        print(f"Using chat ID in speedtest_command: {CHAT_ID}")
         if message.from_user.id not in AUTHORIZED_USERS:
             await message.reply_text("**You are not authorized to use this command.**")
             return
@@ -228,6 +234,7 @@ async def start_bot():
 
     @app.on_message(filters.command("eval", prefixes="."))
     async def eval_command(client, message):
+        print(f"Using chat ID in eval_command: {CHAT_ID}")
         if message.from_user.id not in AUTHORIZED_USERS:
             await message.reply_text("**You are not authorized to use this command.**")
             return
