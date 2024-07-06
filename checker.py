@@ -14,7 +14,7 @@ import signal
 
 # Configuration and Constants
 API_ID = "Enter Value Here"
-API_HASH = "Enter  Value Here"
+API_HASH = "Enter Value Here"
 BOT_TOKEN = "Enter Value Here"
 CHAT_ID = -1001341570295
 APP_CENTER_URL = "https://api.appcenter.ms/v0.1/public/sdk/apps/f9726602-67c9-48d2-b5d0-4761f1c1a8f3/releases/latest"
@@ -29,7 +29,7 @@ sslcontext.verify_mode = ssl.CERT_NONE
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-AUTHORIZED_USERS = [1019823976, 1743735915, 1218619440]
+AUTHORIZED_USERS = [1019823976, 1743735915, 1218619440, 5875384990, 7272442663]
 
 async def download_file(session, url, message, total_size, file_path, retries=3):
     for attempt in range(retries):
@@ -84,7 +84,6 @@ async def check_for_updates(first_run=False):
     conn = aiohttp.TCPConnector(limit_per_host=10, ssl=sslcontext)
     async with aiohttp.ClientSession(connector=conn) as session:
         await prepare_thumbnail(session)
-        print(f"Using chat ID in check_for_updates: {CHAT_ID}")
 
         while True:
             try:
@@ -110,7 +109,7 @@ async def check_for_updates(first_run=False):
                                     await app.send_message(CHAT_ID, "⚠ Warning! New release with no download URL found. Recommend investigation.")
                                 else:
                                     message = await app.send_photo(CHAT_ID, photo=THUMBNAIL_URL, caption=f"**Build {short_version} ({version}) was released.**\n__Preparing to download...__")
-                                    apk_path = "app.apk"
+                                    apk_path = "AndroidBeta.apk"
                                     file_path = await download_file(session, download_url, message, total_size, apk_path)
                                     await app.send_chat_action(CHAT_ID, enums.ChatAction.UPLOAD_DOCUMENT)
                                     caption = f"🚀 **New Beta v{short_version} ({version}) released!**\n\n"
@@ -143,9 +142,8 @@ async def send_latest_build(app, session):
     if download_url == 'not found':
         await app.send_message(CHAT_ID, "⚠ Warning! New release with no download URL found. Recommend investigation.")
     else:
-        print(f"Using chat ID in send_latest_build: {CHAT_ID}")
         message = await app.send_photo(CHAT_ID, photo=THUMBNAIL_URL, caption=f"**Build {short_version} ({version}) was released.**\n__Preparing to download...__")
-        apk_path = "app.apk"
+        apk_path = "AndroidBeta.apk"
         file_path = await download_file(session, download_url, message, total_size, apk_path)
         await app.send_chat_action(CHAT_ID, enums.ChatAction.UPLOAD_DOCUMENT)
         caption = f"🚀 **New Beta v{short_version} ({version}) released!**\n\n"
@@ -163,7 +161,6 @@ async def start_bot():
 
     @app.on_message(filters.command("latest", prefixes="."))
     async def latest_build(client, message):
-        print(f"Using chat ID in latest_build: {CHAT_ID}")
         m = await message.reply_text("`Loading...`")
         try:
             release_info = await fetch_release_info(session)
@@ -199,7 +196,6 @@ async def start_bot():
 
     @app.on_message(filters.command("connectiontest", prefixes="."))
     async def connectiontest_command(client, message):
-        print(f"Using chat ID in connectiontest_command: {CHAT_ID}")
         if message.from_user.id not in AUTHORIZED_USERS:
             await message.reply_text("**You are not authorized to use this command.**")
             return
@@ -225,7 +221,6 @@ async def start_bot():
 
     @app.on_message(filters.command("speedtest", prefixes="."))
     async def speedtest_command(client, message):
-        print(f"Using chat ID in speedtest_command: {CHAT_ID}")
         if message.from_user.id not in AUTHORIZED_USERS:
             await message.reply_text("**You are not authorized to use this command.**")
             return
@@ -234,7 +229,6 @@ async def start_bot():
 
     @app.on_message(filters.command("eval", prefixes="."))
     async def eval_command(client, message):
-        print(f"Using chat ID in eval_command: {CHAT_ID}")
         if message.from_user.id not in AUTHORIZED_USERS:
             await message.reply_text("**You are not authorized to use this command.**")
             return
@@ -298,6 +292,41 @@ async def start_bot():
             if len(output) == 0:
                 output = "Command executed successfully with no output."
             await m.edit_text(f"**Command Output:**\n```\n{output}\n```")
+
+    @app.on_message(filters.command("help", prefixes="."))
+    async def help_command(client, message):
+        response_message = (
+            "**Bot Commands:**\n\n"
+            "`.latest` - Fetches and displays the latest build information.\n"
+            "`.connectiontest` - Runs a speed test and displays the results.\n"
+            "`.speedtest` - Downloads the latest build and sends it to the chat.\n"
+            "`.eval` - Executes a shell command and returns the output.\n"
+        )
+
+        reply_markup = types.InlineKeyboardMarkup(
+            [
+                [types.InlineKeyboardButton("Download Latest Beta", callback_data="download_latest_beta")],
+                [types.InlineKeyboardButton("Latest Beta Info", callback_data="latest_beta_info")],
+                [types.InlineKeyboardButton("Connectivity Test", callback_data="connectivity_test")]
+            ]
+        )
+
+        await message.reply_text(response_message, reply_markup=reply_markup)
+
+    @app.on_callback_query(filters.regex("download_latest_beta"))
+    async def on_download_latest_beta(client, callback_query):
+        await send_latest_build(client, session)
+        await callback_query.answer()
+
+    @app.on_callback_query(filters.regex("latest_beta_info"))
+    async def on_latest_beta_info(client, callback_query):
+        await latest_build(client, callback_query.message)
+        await callback_query.answer()
+
+    @app.on_callback_query(filters.regex("connectivity_test"))
+    async def on_connectivity_test(client, callback_query):
+        await connectiontest_command(client, callback_query.message)
+        await callback_query.answer()
 
     await app.start()
     await prepare_thumbnail(session)
