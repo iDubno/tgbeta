@@ -82,7 +82,8 @@ async def main():
                 file_path = await download_file(session, download_url, message, total_size, apk_path)
                 await app.send_chat_action(CHAT_ID, enums.ChatAction.UPLOAD_DOCUMENT)
                 caption = f"🚀 **New Beta v{short_version} ({version}) released!**\n\n"
-                caption += f"📝 Release notes:\n{release_notes}"
+                if release_notes:
+                    caption += f"📝 Release notes:\n{release_notes}"
                 await app.send_document(CHAT_ID, file_path, caption=caption, thumb=THUMBNAIL_PATH)
                 await message.delete()
                 os.remove(apk_path)
